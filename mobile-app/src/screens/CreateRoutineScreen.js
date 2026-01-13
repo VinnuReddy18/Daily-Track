@@ -12,7 +12,7 @@ import {
     ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import colors from '../theme/colors';
+import { useSettings } from '../context/SettingsContext';
 import { routineAPI, taskAPI } from '../services/api';
 
 const DAYS = [
@@ -26,6 +26,7 @@ const DAYS = [
 ];
 
 const CreateRoutineScreen = ({ navigation }) => {
+    const { colors } = useSettings();
     const [routineName, setRoutineName] = useState('');
     const [selectedDays, setSelectedDays] = useState([]);
     const [tasks, setTasks] = useState(['']);
@@ -105,22 +106,22 @@ const CreateRoutineScreen = ({ navigation }) => {
 
     return (
         <KeyboardAvoidingView
-            style={styles.container}
+            style={[styles.container, { backgroundColor: colors.background }]}
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
-            <View style={styles.header}>
+            <View style={[styles.header, { backgroundColor: colors.surface }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()}>
                     <Ionicons name="close" size={28} color={colors.text} />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>New Routine</Text>
+                <Text style={[styles.headerTitle, { color: colors.text }]}>New Routine</Text>
                 <View style={{ width: 28 }} />
             </View>
 
             <ScrollView style={styles.content} keyboardShouldPersistTaps="handled">
                 <View style={styles.section}>
-                    <Text style={styles.label}>Routine Name</Text>
+                    <Text style={[styles.label, { color: colors.text }]}>Routine Name</Text>
                     <TextInput
-                        style={styles.input}
+                        style={[styles.input, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
                         placeholder="e.g., Morning Routine"
                         value={routineName}
                         onChangeText={setRoutineName}
@@ -129,21 +130,23 @@ const CreateRoutineScreen = ({ navigation }) => {
                 </View>
 
                 <View style={styles.section}>
-                    <Text style={styles.label}>Frequency</Text>
+                    <Text style={[styles.label, { color: colors.text }]}>Frequency</Text>
                     <View style={styles.daysContainer}>
                         {DAYS.map(day => (
                             <TouchableOpacity
                                 key={day.key}
                                 style={[
                                     styles.dayButton,
-                                    selectedDays.includes(day.key) && styles.dayButtonSelected,
+                                    { borderColor: colors.border, backgroundColor: colors.surface },
+                                    selectedDays.includes(day.key) && { backgroundColor: colors.primary, borderColor: colors.primary },
                                 ]}
                                 onPress={() => toggleDay(day.key)}
                             >
                                 <Text
                                     style={[
                                         styles.dayButtonText,
-                                        selectedDays.includes(day.key) && styles.dayButtonTextSelected,
+                                        { color: colors.text },
+                                        selectedDays.includes(day.key) && { color: colors.surface },
                                     ]}
                                 >
                                     {day.label}
@@ -155,7 +158,7 @@ const CreateRoutineScreen = ({ navigation }) => {
 
                 <View style={styles.section}>
                     <View style={styles.labelRow}>
-                        <Text style={styles.label}>Tasks</Text>
+                        <Text style={[styles.label, { color: colors.text }]}>Tasks</Text>
                         <TouchableOpacity onPress={addTask} style={styles.addButton}>
                             <Ionicons name="add-circle" size={24} color={colors.primary} />
                         </TouchableOpacity>
@@ -164,7 +167,7 @@ const CreateRoutineScreen = ({ navigation }) => {
                     {tasks.map((task, index) => (
                         <View key={index} style={styles.taskInputContainer}>
                             <TextInput
-                                style={styles.taskInput}
+                                style={[styles.taskInput, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
                                 placeholder={`Task ${index + 1}`}
                                 value={task}
                                 onChangeText={(value) => updateTask(index, value)}
@@ -180,16 +183,16 @@ const CreateRoutineScreen = ({ navigation }) => {
                 </View>
             </ScrollView>
 
-            <View style={styles.footer}>
+            <View style={[styles.footer, { backgroundColor: colors.surface, borderTopColor: colors.borderLight }]}>
                 <TouchableOpacity
-                    style={[styles.saveButton, loading && styles.saveButtonDisabled]}
+                    style={[styles.saveButton, { backgroundColor: colors.primary }, loading && styles.saveButtonDisabled]}
                     onPress={handleSave}
                     disabled={loading}
                 >
                     {loading ? (
                         <ActivityIndicator color={colors.surface} />
                     ) : (
-                        <Text style={styles.saveButtonText}>Create Routine</Text>
+                        <Text style={[styles.saveButtonText, { color: colors.surface }]}>Create Routine</Text>
                     )}
                 </TouchableOpacity>
             </View>
@@ -200,7 +203,6 @@ const CreateRoutineScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: colors.background,
     },
     header: {
         flexDirection: 'row',
@@ -209,12 +211,10 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingTop: 60,
         paddingBottom: 20,
-        backgroundColor: colors.surface,
     },
     headerTitle: {
         fontSize: 18,
         fontWeight: '600',
-        color: colors.text,
     },
     content: {
         flex: 1,
@@ -226,18 +226,14 @@ const styles = StyleSheet.create({
     label: {
         fontSize: 16,
         fontWeight: '600',
-        color: colors.text,
         marginBottom: 12,
     },
     input: {
-        backgroundColor: colors.surface,
         borderRadius: 12,
         paddingHorizontal: 16,
         paddingVertical: 14,
         fontSize: 16,
-        color: colors.text,
         borderWidth: 1,
-        borderColor: colors.border,
     },
     daysContainer: {
         flexDirection: 'row',
@@ -249,20 +245,10 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
         borderRadius: 20,
         borderWidth: 1,
-        borderColor: colors.border,
-        backgroundColor: colors.surface,
-    },
-    dayButtonSelected: {
-        backgroundColor: colors.primary,
-        borderColor: colors.primary,
     },
     dayButtonText: {
         fontSize: 14,
         fontWeight: '500',
-        color: colors.text,
-    },
-    dayButtonTextSelected: {
-        color: colors.surface,
     },
     labelRow: {
         flexDirection: 'row',
@@ -280,24 +266,18 @@ const styles = StyleSheet.create({
     },
     taskInput: {
         flex: 1,
-        backgroundColor: colors.surface,
         borderRadius: 12,
         paddingHorizontal: 16,
         paddingVertical: 14,
         fontSize: 16,
-        color: colors.text,
         borderWidth: 1,
-        borderColor: colors.border,
         marginRight: 8,
     },
     footer: {
         padding: 20,
-        backgroundColor: colors.surface,
         borderTopWidth: 1,
-        borderTopColor: colors.borderLight,
     },
     saveButton: {
-        backgroundColor: colors.primary,
         paddingVertical: 16,
         borderRadius: 12,
         alignItems: 'center',
@@ -306,7 +286,6 @@ const styles = StyleSheet.create({
         opacity: 0.6,
     },
     saveButtonText: {
-        color: colors.surface,
         fontSize: 16,
         fontWeight: '600',
     },

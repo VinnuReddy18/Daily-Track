@@ -159,7 +159,153 @@ const login = async (req, res) => {
     }
 };
 
+/**
+ * Change user password
+ * PUT /auth/change-password
+ */
+const changePassword = async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        const userId = req.userId; // From auth middleware
+
+        // Validate input
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({
+                success: false,
+                message: 'Current password and new password are required'
+            });
+        }
+
+        // Validate new password length
+        if (newPassword.length < 6) {
+            return res.status(400).json({
+                success: false,
+                message: 'New password must be at least 6 characters long'
+            });
+        }
+
+        const db = getDatabase();
+        const userRef = db.ref(`users/${userId}`);
+
+        // Get user data
+        const snapshot = await userRef.once('value');
+        if (!snapshot.exists()) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+
+        const user = snapshot.val();
+
+        // Verify current password
+        const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+        if (!isPasswordValid) {
+            return res.status(401).json({
+                success: false,
+                message: 'Current password is incorrect'
+            });
+        }
+
+        // Hash new password
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        // Update password
+        await userRef.update({
+            password: hashedPassword,
+            updatedAt: new Date().toISOString()
+        });
+
+        res.status(200).json({
+            success: true,
+            message: 'Password changed successfully'
+        });
+    } catch (error) {
+        console.error('Change password error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error changing password',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Delete user account and all associated data
+ * DELETE /auth/account
+ */
+const deleteAccount = async (req, res) => {
+    try {
+        const userId = req.userId; // From auth middleware
+
+        const db = getDatabase();
+
+        // Delete all user routines
+        const routinesRef = db.ref('routines');
+        const routinesSnapshot = await routinesRef.orderByChild('userId').equalTo(userId).once('value');
+        if (routinesSnapshot.exists()) {
+            const routines = routinesSnapshot.val();
+            const deleteRoutinesPromises = Object.keys(routines).map(routineId =>
+                db.ref(`routines/${routineId}`).remove()
+            );
+            await Promise.all(deleteRoutinesPromises);
+        }
+
+        // Delete all user tasks
+        const tasksRef = db.ref('tasks');
+        const tasksSnapshot = await tasksRef.once('value');
+        if (tasksSnapshot.exists()) {
+            const tasks = tasksSnapshot.val();
+            const deleteTasksPromises = [];
+            Object.keys(tasks).forEach(taskId => {
+                const task = tasks[taskId];
+                // Check if task belongs to user's routine
+                if (routinesSnapshot.exists()) {
+                    const routines = routinesSnapshot.val();
+                    if (Object.keys(routines).includes(task.routineId)) {
+                        deleteTasksPromises.push(db.ref(`tasks/${taskId}`).remove());
+                    }
+                }
+            });
+            await Promise.all(deleteTasksPromises);
+        }
+
+        // Delete all user completions
+        const completionsRef = db.ref('completions');
+        const completionsSnapshot = await completionsRef.once('value');
+        if (completionsSnapshot.exists()) {
+            const completions = completionsSnapshot.val();
+            const deleteCompletionsPromises = [];
+            Object.keys(completions).forEach(date => {
+                if (completions[date][userId]) {
+                    deleteCompletionsPromises.push(
+                        db.ref(`completions/${date}/${userId}`).remove()
+                    );
+                }
+            });
+            await Promise.all(deleteCompletionsPromises);
+        }
+
+        // Delete user account
+        await db.ref(`users/${userId}`).remove();
+
+        res.status(200).json({
+            success: true,
+            message: 'Account deleted successfully'
+        });
+    } catch (error) {
+        console.error('Delete account error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error deleting account',
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     register,
-    login
+    login,
+    changePassword,
+    deleteAccount
 };

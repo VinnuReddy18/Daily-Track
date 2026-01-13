@@ -7,10 +7,11 @@ import {
     Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import colors from '../theme/colors';
+import { useSettings } from '../context/SettingsContext';
 import ProgressBar from './ProgressBar';
 
 const RoutineCard = ({ routine, tasks = [], completedTasks = [], onPress }) => {
+    const { colors } = useSettings();
     const [expanded, setExpanded] = useState(false);
 
     const totalTasks = tasks.length;
@@ -23,18 +24,18 @@ const RoutineCard = ({ routine, tasks = [], completedTasks = [], onPress }) => {
 
     return (
         <TouchableOpacity
-            style={styles.container}
+            style={styles(colors).container}
             onPress={onPress}
             activeOpacity={0.9}
         >
-            <View style={styles.header}>
-                <View style={styles.headerLeft}>
-                    <Text style={styles.routineName}>{routine.name}</Text>
-                    <Text style={styles.frequency}>
+            <View style={styles(colors).header}>
+                <View style={styles(colors).headerLeft}>
+                    <Text style={styles(colors).routineName}>{routine.name}</Text>
+                    <Text style={styles(colors).frequency}>
                         {routine.frequency.map(d => d.toUpperCase()).join(', ')}
                     </Text>
                 </View>
-                <TouchableOpacity onPress={toggleExpand} style={styles.expandButton}>
+                <TouchableOpacity onPress={toggleExpand} style={styles(colors).expandButton}>
                     <Ionicons
                         name={expanded ? 'chevron-up' : 'chevron-down'}
                         size={24}
@@ -43,27 +44,27 @@ const RoutineCard = ({ routine, tasks = [], completedTasks = [], onPress }) => {
                 </TouchableOpacity>
             </View>
 
-            <View style={styles.progressSection}>
+            <View style={styles(colors).progressSection}>
                 <ProgressBar progress={progress} />
-                <Text style={styles.progressText}>
+                <Text style={styles(colors).progressText}>
                     {completed}/{totalTasks} tasks completed
                 </Text>
             </View>
 
             {expanded && tasks.length > 0 && (
-                <View style={styles.tasksContainer}>
+                <View style={styles(colors).tasksContainer}>
                     {tasks.map((task) => (
-                        <View key={task.id} style={styles.taskRow}>
+                        <View key={task.id} style={styles(colors).taskRow}>
                             <View
                                 style={[
-                                    styles.taskDot,
-                                    completedTasks.includes(task.id) && styles.taskDotCompleted,
+                                    styles(colors).taskDot,
+                                    completedTasks.includes(task.id) && styles(colors).taskDotCompleted,
                                 ]}
                             />
                             <Text
                                 style={[
-                                    styles.taskText,
-                                    completedTasks.includes(task.id) && styles.taskTextCompleted,
+                                    styles(colors).taskText,
+                                    completedTasks.includes(task.id) && styles(colors).taskTextCompleted,
                                 ]}
                             >
                                 {task.name}
@@ -76,7 +77,7 @@ const RoutineCard = ({ routine, tasks = [], completedTasks = [], onPress }) => {
     );
 };
 
-const styles = StyleSheet.create({
+const styles = (colors) => StyleSheet.create({
     container: {
         backgroundColor: colors.surface,
         borderRadius: 16,

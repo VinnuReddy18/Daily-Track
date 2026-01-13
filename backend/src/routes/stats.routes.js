@@ -3,6 +3,7 @@ const router = express.Router();
 const { authenticate } = require('../middleware/auth.middleware');
 const {
     markTaskCompleted,
+    unmarkTaskCompleted,
     getDailyStats,
     getWeeklyStats
 } = require('../controllers/stats.controller');
@@ -13,6 +14,13 @@ const {
  * @access  Private
  */
 router.post('/completion', authenticate, markTaskCompleted);
+
+/**
+ * @route   DELETE /completion/:taskId
+ * @desc    Unmark a task as completed
+ * @access  Private
+ */
+router.delete('/completion/:taskId', authenticate, unmarkTaskCompleted);
 
 /**
  * @route   GET /stats/daily?date=YYYY-MM-DD

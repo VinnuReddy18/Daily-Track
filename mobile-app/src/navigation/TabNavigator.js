@@ -2,13 +2,14 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
-import colors from '../theme/colors';
+import { useSettings } from '../context/SettingsContext';
 
 import HomeScreen from '../screens/HomeScreen';
 import CreateRoutineScreen from '../screens/CreateRoutineScreen';
 import RoutineDetailScreen from '../screens/RoutineDetailScreen';
 import ProgressScreen from '../screens/ProgressScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import SettingsScreen from '../screens/SettingsScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -28,8 +29,24 @@ const HomeStack = () => {
     );
 };
 
+// Profile Stack Navigator
+const ProfileStack = () => {
+    return (
+        <Stack.Navigator
+            screenOptions={{
+                headerShown: false,
+            }}
+        >
+            <Stack.Screen name="ProfileMain" component={ProfileScreen} />
+            <Stack.Screen name="Settings" component={SettingsScreen} />
+        </Stack.Navigator>
+    );
+};
+
 // Main Tab Navigator
 const TabNavigator = () => {
+    const { colors } = useSettings();
+
     return (
         <Tab.Navigator
             screenOptions={({ route }) => ({
@@ -65,7 +82,7 @@ const TabNavigator = () => {
         >
             <Tab.Screen name="Home" component={HomeStack} />
             <Tab.Screen name="Progress" component={ProgressScreen} />
-            <Tab.Screen name="Profile" component={ProfileScreen} />
+            <Tab.Screen name="Profile" component={ProfileStack} />
         </Tab.Navigator>
     );
 };

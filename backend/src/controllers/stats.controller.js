@@ -86,6 +86,59 @@ const markTaskCompleted = async (req, res) => {
 };
 
 /**
+ * Unmark a task as completed (un-complete)
+ * DELETE /completion/:taskId
+ */
+const unmarkTaskCompleted = async (req, res) => {
+    try {
+        const { taskId } = req.params;
+        const { date } = req.query;
+        const userId = req.userId;
+
+        // Validate input
+        if (!taskId) {
+            return res.status(400).json({
+                success: false,
+                message: 'Task ID is required'
+            });
+        }
+
+        const completionDate = date || getCurrentDate();
+
+        // Validate date format
+        if (!isValidDate(completionDate)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid date format. Use YYYY-MM-DD'
+            });
+        }
+
+        const db = getDatabase();
+
+        // Remove task completion
+        const completionRef = db.ref(`completions/${completionDate}/${userId}/${taskId}`);
+        await completionRef.remove();
+
+        res.status(200).json({
+            success: true,
+            message: 'Task unmarked successfully',
+            data: {
+                taskId,
+                date: completionDate,
+                completed: false
+            }
+        });
+    } catch (error) {
+        console.error('Unmark task completed error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error unmarking task',
+            error: error.message
+        });
+    }
+};
+
+/**
  * Get daily statistics
  * GET /stats/daily?date=YYYY-MM-DD
  */
@@ -319,6 +372,7 @@ const getWeeklyStats = async (req, res) => {
 
 module.exports = {
     markTaskCompleted,
+    unmarkTaskCompleted,
     getDailyStats,
     getWeeklyStats
 };

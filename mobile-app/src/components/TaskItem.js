@@ -1,28 +1,29 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import colors from '../theme/colors';
+import { useSettings } from '../context/SettingsContext';
 
 const TaskItem = ({ task, completed, onToggle }) => {
+    const { colors } = useSettings();
     return (
         <TouchableOpacity
-            style={styles.container}
+            style={styles(colors).container}
             onPress={onToggle}
             activeOpacity={0.7}
         >
-            <View style={[styles.checkbox, completed && styles.checkboxCompleted]}>
+            <View style={[styles(colors).checkbox, completed && styles(colors).checkboxCompleted]}>
                 {completed && (
                     <Ionicons name="checkmark" size={16} color={colors.surface} />
                 )}
             </View>
-            <Text style={[styles.taskName, completed && styles.taskNameCompleted]}>
+            <Text style={[styles(colors).taskName, completed && styles(colors).taskNameCompleted]}>
                 {task.name}
             </Text>
         </TouchableOpacity>
     );
 };
 
-const styles = StyleSheet.create({
+const styles = (colors) => StyleSheet.create({
     container: {
         flexDirection: 'row',
         alignItems: 'center',

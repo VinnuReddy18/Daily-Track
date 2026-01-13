@@ -18,8 +18,13 @@ const api = axios.create({
 api.interceptors.request.use(
     async (config) => {
         const token = await AsyncStorage.getItem('token');
+        console.log('API Request:', config.url);
+        console.log('Token retrieved:', token ? 'Yes' : 'No');
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
+            console.log('Authorization header set');
+        } else {
+            console.log('No token found in AsyncStorage');
         }
         return config;
     },
@@ -46,6 +51,8 @@ api.interceptors.response.use(
 export const authAPI = {
     register: (data) => api.post('/auth/register', data),
     login: (data) => api.post('/auth/login', data),
+    changePassword: (data) => api.put('/auth/change-password', data),
+    deleteAccount: () => api.delete('/auth/account'),
 };
 
 // Routine APIs
@@ -67,6 +74,7 @@ export const taskAPI = {
 // Stats APIs
 export const statsAPI = {
     markCompleted: (data) => api.post('/stats/completion', data),
+    unmarkCompleted: (taskId, date) => api.delete(`/stats/completion/${taskId}${date ? `?date=${date}` : ''}`),
     getDaily: (date) => api.get(`/stats/daily${date ? `?date=${date}` : ''}`),
     getWeekly: () => api.get('/stats/weekly'),
 };

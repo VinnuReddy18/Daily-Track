@@ -9,13 +9,14 @@ import {
     Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import colors from '../theme/colors';
+import { useSettings } from '../context/SettingsContext';
 import { routineAPI, taskAPI, statsAPI } from '../services/api';
 import RoutineCard from '../components/RoutineCard';
 import LoadingIndicator from '../components/LoadingIndicator';
 import TaskItem from '../components/TaskItem';
 
 const HomeScreen = ({ navigation }) => {
+    const { colors, settings } = useSettings();
     const [routines, setRoutines] = useState([]);
     const [routineTasks, setRoutineTasks] = useState({});
     const [completedTasks, setCompletedTasks] = useState({});
@@ -87,19 +88,30 @@ const HomeScreen = ({ navigation }) => {
     const handleTaskToggle = async (task, routineId) => {
         const isCompleted = completedTasks[task.id];
 
-        if (isCompleted) {
-            // Already completed, don't allow un-completion for now
+        if (isCompleted && !settings.allowTaskUncompletion) {
+            // Already completed, don't allow un-completion unless setting is enabled
             return;
         }
 
         try {
-            // Optimistic update
-            setCompletedTasks(prev => ({ ...prev, [task.id]: true }));
+            if (isCompleted) {
+                // Un-complete task
+                setCompletedTasks(prev => {
+                    const newState = { ...prev };
+                    delete newState[task.id];
+                    return newState;
+                });
 
-            await statsAPI.markCompleted({
-                taskId: task.id,
-                routineId: routineId,
-            });
+                await statsAPI.unmarkCompleted(task.id);
+            } else {
+                // Complete task
+                setCompletedTasks(prev => ({ ...prev, [task.id]: true }));
+
+                await statsAPI.markCompleted({
+                    taskId: task.id,
+                    routineId: routineId,
+                });
+            }
 
             // Refresh to get updated stats
             await fetchCompletions();
@@ -149,10 +161,10 @@ const HomeScreen = ({ navigation }) => {
     }
 
     return (
-        <View style={styles.container}>
-            <View style={styles.header}>
-                <Text style={styles.headerTitle}>Today's Routines</Text>
-                <Text style={styles.headerSubtitle}>
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <View style={[styles.header, { backgroundColor: colors.surface }]}>
+                <Text style={[styles.headerTitle, { color: colors.text }]}>Today's Routines</Text>
+                <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
                     {new Date().toLocaleDateString('en-US', {
                         weekday: 'long',
                         month: 'long',
@@ -176,8 +188,8 @@ const HomeScreen = ({ navigation }) => {
                 ListEmptyComponent={
                     <View style={styles.emptyContainer}>
                         <Ionicons name="calendar-outline" size={64} color={colors.textLight} />
-                        <Text style={styles.emptyText}>No routines yet</Text>
-                        <Text style={styles.emptySubtext}>
+                        <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No routines yet</Text>
+                        <Text style={[styles.emptySubtext, { color: colors.textLight }]}>
                             Tap the + button to create your first routine
                         </Text>
                     </View>
@@ -185,7 +197,7 @@ const HomeScreen = ({ navigation }) => {
             />
 
             <TouchableOpacity
-                style={styles.fab}
+                style={[styles.fab, { backgroundColor: colors.primary, shadowColor: colors.shadow }]}
                 onPress={() => navigation.navigate('CreateRoutine')}
                 activeOpacity={0.8}
             >
@@ -198,23 +210,19 @@ const HomeScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: colors.background,
     },
     header: {
         paddingHorizontal: 24,
         paddingTop: 60,
         paddingBottom: 20,
-        backgroundColor: colors.surface,
     },
     headerTitle: {
         fontSize: 28,
         fontWeight: 'bold',
-        color: colors.text,
         marginBottom: 4,
     },
     headerSubtitle: {
         fontSize: 14,
-        color: colors.textSecondary,
     },
     listContent: {
         padding: 16,
@@ -233,12 +241,10 @@ const styles = StyleSheet.create({
     emptyText: {
         fontSize: 18,
         fontWeight: '600',
-        color: colors.textSecondary,
         marginTop: 16,
     },
     emptySubtext: {
         fontSize: 14,
-        color: colors.textLight,
         marginTop: 8,
         textAlign: 'center',
     },
@@ -249,10 +255,8 @@ const styles = StyleSheet.create({
         width: 56,
         height: 56,
         borderRadius: 28,
-        backgroundColor: colors.primary,
         justifyContent: 'center',
         alignItems: 'center',
-        shadowColor: colors.shadow,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 8,
