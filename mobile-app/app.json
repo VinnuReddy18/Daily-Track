@@ -1,0 +1,26 @@
+{
+    "expo": {
+        "name": "Daily Track",
+        "slug": "daily-track",
+        "version": "1.0.0",
+        "orientation": "portrait",
+        "userInterfaceStyle": "light",
+        "splash": {
+            "resizeMode": "contain",
+            "backgroundColor": "#5B63D3"
+        },
+        "assetBundlePatterns": [
+            "**/*"
+        ],
+        "ios": {
+            "supportsTablet": true,
+            "bundleIdentifier": "com.dailytrack.app"
+        },
+        "android": {
+            "adaptiveIcon": {
+                "backgroundColor": "#5B63D3"
+            },
+            "package": "com.dailytrack.app"
+        }
+    }
+}
